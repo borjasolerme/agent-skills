@@ -3,27 +3,45 @@ name: reddit-comment-writer
 description: Write authentic Reddit comments that naturally mention a product without sounding spammy. Use this skill when the user wants to reply to a Reddit post or comment thread to engage genuinely while subtly promoting their product. Triggers on requests like "write a reddit comment", "reply to this reddit post", "engage in this thread", or when the user shares a Reddit URL and asks for a comment draft.
 ---
 
-Read the Reddit post via Playwright MCP browser tools or from pasted text. Write a reply that genuinely helps the conversation while naturally weaving in the user's product as one option among several.
+Read the Reddit post via browser automation tools or from pasted text. Write a reply that genuinely helps the conversation while naturally weaving in the user's product as one option among several.
 
 Golden rule: if a comment sounds like an ad, it fails. Every reply must pass as peer advice from someone who happens to use the product.
 
-## Required Tool: Playwright MCP
+## Required Tool: Browser Automation (Chrome Extension or Playwright)
 
-This skill uses Playwright MCP to interact with Reddit.
+This skill uses browser automation to interact with Reddit. **Prefer Claude Chrome Extension** (`claude-in-chrome`) when available — it connects to the user's real Chrome session (logged-in Reddit, cookies, etc.). Fall back to **Playwright MCP** if the Chrome extension tools are not available.
 
-| MCP Tool | Purpose |
-|---|---|
-| `browser_navigate` | Navigate to Reddit pages |
-| `browser_snapshot` | Capture page structure (accessibility tree) |
-| `browser_click` | Click elements (comment box, buttons) |
-| `browser_type` | Input text (comment content) |
-| `browser_wait_for` | Wait for page loading |
+### How to detect which tools are available
 
-**Important rules when using Playwright MCP:**
+- If tools prefixed with `mcp__claude-in-chrome__` exist → use **Chrome Extension**
+- Else if tools prefixed with `mcp__playwright__` exist → use **Playwright**
+- If neither is available, ask the user to paste the thread text
+
+### Tool mapping
+
+| Action | Chrome Extension (`claude-in-chrome`) | Playwright MCP |
+|---|---|---|
+| **Navigate** | `navigate` | `browser_navigate` |
+| **Read page** | `read_page` (accessibility tree) | `browser_snapshot` |
+| **Find element** | `find` (natural language search) | _(use snapshot refs)_ |
+| **Click** | `computer` (action: `left_click`) | `browser_click` |
+| **Type text** | `form_input` or `computer` (action: `type`) | `browser_type` |
+| **Wait** | `computer` (action: `wait`) | `browser_wait_for` |
+| **Extract text** | `get_page_text` | _(parse snapshot)_ |
+
+### Chrome Extension setup (required before first action)
+
+1. Call `tabs_context_mcp` to get existing tabs
+2. Create a new tab with `tabs_create_mcp` (or reuse an existing one if the user asks)
+3. All subsequent tool calls require the `tabId` from the created/selected tab
+
+### Important rules for browser automation
+
 - Minimize tokens: don't pass entire conversation context to MCP calls — only concisely summarize the essential info needed for that action
-- Direct navigation: use `browser_navigate` to go to URLs directly rather than clicking links (prevents click errors, saves tokens)
+- Direct navigation: navigate to URLs directly rather than clicking links (prevents click errors, saves tokens)
 - Concise instructions: pass only minimal instructions like "Navigate to [URL]", "Click [element]", "Type: [text]"
-- No screenshots: do NOT use `browser_take_screenshot`. Always use only `browser_snapshot` for page verification (accessibility tree is sufficient)
+- No screenshots for page reading: use `read_page` / `browser_snapshot` (accessibility tree) instead of screenshots for understanding page structure
+- Chrome Extension: use `find` with natural language queries (e.g., "comment input box", "submit button") to locate elements — this is simpler than parsing snapshot refs
 
 ## Input
 
@@ -31,7 +49,7 @@ Ask the user for anything missing before drafting:
 
 1. **Product name + URL** (e.g., "acmeapp .com")
 2. **One-sentence product description**
-3. **The Reddit post** (URL preferred — the agent will navigate to it via Playwright)
+3. **The Reddit post** (URL preferred — the agent will navigate to it via browser automation)
 
 ## Writing Style
 
@@ -91,8 +109,15 @@ If the product doesn't fit the conversation naturally, write a value-only commen
 
 ## Process
 
-### 1. Read the thread (via Playwright)
+### 1. Read the thread (via browser automation)
 
+**Chrome Extension:**
+1. `tabs_context_mcp` → `tabs_create_mcp` to set up a tab (first time only)
+2. `navigate` to the Reddit post URL (pass `tabId`)
+3. `read_page` to capture the post title, body, and top comments
+4. If comments aren't loaded, `computer` (action: `scroll`, direction: `down`) and `read_page` again
+
+**Playwright:**
 1. `browser_navigate` to the Reddit post URL
 2. `browser_snapshot` to capture the post title, body, and top comments
 3. If comments aren't loaded, scroll down and snapshot again
@@ -123,6 +148,16 @@ Discard drafts that fail any criterion. Rewrite the top 3, present them ranked w
 
 Only after the user picks a draft and explicitly says to post it:
 
+**Chrome Extension:**
+1. `navigate` to the Reddit post URL (if not already there)
+2. `find` query: "comment input box" to locate the comment field
+3. `computer` (action: `left_click`) on the comment box
+4. `form_input` or `computer` (action: `type`) to enter the selected comment text
+5. `read_page` to verify the text is correct
+6. Ask the user for final confirmation before clicking submit
+7. `find` query: "submit comment button" → `computer` (action: `left_click`) to submit
+
+**Playwright:**
 1. `browser_navigate` to the Reddit post URL (if not already there)
 2. `browser_snapshot` to find the comment input box
 3. `browser_click` on the comment box
