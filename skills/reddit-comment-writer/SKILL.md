@@ -1,186 +1,104 @@
 ---
 name: reddit-comment-writer
-description: Write authentic Reddit comments that naturally mention a product without sounding spammy. Use this skill when the user wants to reply to a Reddit post or comment thread to engage genuinely while subtly promoting their product. Triggers on requests like "write a reddit comment", "reply to this reddit post", "engage in this thread", or when the user shares a Reddit URL and asks for a comment draft.
+description: Write authentic Reddit comments that naturally mention a product without sounding spammy. Supports company profiles, batch mode ("do today for [company]"), activity tracking, and voice personalization. Triggers on "write a reddit comment", "reply to this reddit post", "set up [company]", "do today for [company]", "fill quota", "learn my style", "show progress", or when the user shares a Reddit URL.
 ---
 
-Read the Reddit post via browser automation tools or from pasted text. Write a reply that genuinely helps the conversation while naturally weaving in the user's product as one option among several.
+# Reddit Comment Writer
 
-Golden rule: if a comment sounds like an ad, it fails. Every reply must pass as peer advice from someone who happens to use the product.
+Write replies that genuinely help the conversation while naturally weaving in the user's product as one option among several. Golden rule: if a comment sounds like an ad, it fails. Every reply must pass as peer advice from someone who happens to use the product.
 
-## Required Tool: Browser Automation (Chrome Extension or Playwright)
+## Structure
 
-This skill uses browser automation to interact with Reddit. **Prefer Claude Chrome Extension** (`claude-in-chrome`) when available — it connects to the user's real Chrome session (logged-in Reddit, cookies, etc.). Fall back to **Playwright MCP** if the Chrome extension tools are not available.
+- `rules/` - Writing rules and quality checks
+  - `style-guide.md` - Voice, formatting, capitalization, tone, do/don't examples
+  - `comment-angles.md` - 5 comment angles with patterns and real-world examples
+  - `spam-signals.md` - Spam patterns to avoid, anti-patterns, red flags
+- `workflows/` - Multi-step flows
+  - `setup-profile.md` - Interactive company profile creation
+  - `batch-mode.md` - Quota-filling loop across subreddits
+- `profiles/` - Company profiles (one per product)
+  - `_template.md` - Blank profile schema
+  - `{slug}.md` - Filled profiles created via setup flow
+- `personalization/` - Optional voice matching
+  - `voice-samples.md` - User's Reddit comments + auto-generated Voice Analysis
+- `tracking/` - Daily activity logs (auto-created at runtime)
+  - `{YYYY-MM-DD}.md` - Per-day comment log with quota progress
 
-### How to detect which tools are available
+## Critical Rules
 
-- If tools prefixed with `mcp__claude-in-chrome__` exist → use **Chrome Extension**
-- Else if tools prefixed with `mcp__playwright__` exist → use **Playwright**
-- If neither is available, ask the user to paste the thread text
+- **Login Required:** Check Reddit account login status before any posting action
+- **Rate Limiting:** Posting too fast risks account restrictions — respect cooldowns between comments
+- **Community Rules:** Follow each subreddit's specific rules (check sidebar before first comment)
+- **Spam Prevention:** NO copy-pasting the same content across threads. Every comment must be unique
+- **Review Required:** If any checklist item from Step 3 is violated, rewrite — never post a failing comment
+- **Post Analysis Required:** NEVER write a comment without fully reading the post first. Judging by title alone causes serious errors — always complete Step 1 before drafting
 
-### Tool mapping
+## Intent Detection
 
-| Action | Chrome Extension (`claude-in-chrome`) | Playwright MCP |
+| User says | Action |
+|---|---|
+| "set up [company]" / "new profile" | Read and follow [setup-profile.md](workflows/setup-profile.md) |
+| "do today for [company]" / "fill quota" | Read and follow [batch-mode.md](workflows/batch-mode.md) |
+| "learn my style" / pastes Reddit comments | Read and follow [voice-samples.md](personalization/voice-samples.md) |
+| Shares a Reddit URL | Single-comment flow (continue below) |
+| "show progress" / "what did I do today" | Read and display `tracking/{YYYY-MM-DD}.md` (today's date) |
+
+## File Reference Timing
+
+Reference each file only at the relevant step — don't read in advance unless noted.
+
+| File | When to read |
+|---|---|
+| `profiles/{slug}.md` | Input — when company name is mentioned, load profile and skip product questions |
+| `rules/style-guide.md` | Step 2 — writing voice, formatting, do/don't examples |
+| `rules/comment-angles.md` | Step 2 — 5 angles with patterns and real examples. In batch mode, read once at session start |
+| `rules/spam-signals.md` | Step 3 — spam patterns, anti-patterns, red flags |
+| `personalization/voice-samples.md` | Step 2 — only if Voice Analysis section is populated. User's voice takes priority over style guide |
+| `tracking/{YYYY-MM-DD}.md` | Step 5 — logging. Create if it doesn't exist |
+
+## Browser Automation
+
+**Prefer Chrome Extension** (`mcp__claude-in-chrome__`) → falls back to **Playwright** (`mcp__playwright__`) → falls back to pasted text.
+
+Minimize tokens in all browser calls — pass only concise instructions (e.g., "Navigate to [URL]", "Click comment box", "Type: [text]"). Always navigate directly to URLs instead of clicking links.
+
+| Action | Chrome Extension | Playwright |
 |---|---|---|
-| **Navigate** | `navigate` | `browser_navigate` |
-| **Read page** | `read_page` (accessibility tree) | `browser_snapshot` |
-| **Find element** | `find` (natural language search) | _(use snapshot refs)_ |
-| **Click** | `computer` (action: `left_click`) | `browser_click` |
-| **Type text** | `form_input` or `computer` (action: `type`) | `browser_type` |
-| **Wait** | `computer` (action: `wait`) | `browser_wait_for` |
-| **Extract text** | `get_page_text` | _(parse snapshot)_ |
+| Navigate | `navigate` | `browser_navigate` |
+| Read page | `read_page` | `browser_snapshot` |
+| Find element | `find` (natural language) | _(snapshot refs)_ |
+| Click | `computer` (left_click) | `browser_click` |
+| Type | `form_input` / `computer` (type) | `browser_type` |
 
-### Chrome Extension setup (required before first action)
-
-1. Call `tabs_context_mcp` to get existing tabs
-2. Create a new tab with `tabs_create_mcp` (or reuse an existing one if the user asks)
-3. All subsequent tool calls require the `tabId` from the created/selected tab
-
-### Important rules for browser automation
-
-- Minimize tokens: don't pass entire conversation context to MCP calls — only concisely summarize the essential info needed for that action
-- Direct navigation: navigate to URLs directly rather than clicking links (prevents click errors, saves tokens)
-- Concise instructions: pass only minimal instructions like "Navigate to [URL]", "Click [element]", "Type: [text]"
-- No screenshots for page reading: use `read_page` / `browser_snapshot` (accessibility tree) instead of screenshots for understanding page structure
-- Chrome Extension: use `find` with natural language queries (e.g., "comment input box", "submit button") to locate elements — this is simpler than parsing snapshot refs
-
-## Input
-
-Ask the user for anything missing before drafting:
-
-1. **Product name + URL** (e.g., "acmeapp .com")
-2. **One-sentence product description**
-3. **The Reddit post** (URL preferred — the agent will navigate to it via browser automation)
-
-## Writing Style
-
-Match the casual, lowercase, founder-in-the-trenches tone. For the full style reference with do/don't examples, see [style-guide.md](references/style-guide.md).
-
-Key rules:
-- all lowercase except proper nouns
-- short sentences, double line breaks between them
-- conversational and helpful, never salesy
-- product mentioned as one tool among several real alternatives
-- no em dashes, no bullet point walls, no corporate language
-- URLs with space before TLD (e.g., "acmeapp .com")
-- under 250 words, ideally 50-150
-
-<examples>
-
-which is the main problem for you? the script? to make the avatar realistic?
-
-to make the avatar realistic you can use [tool-a] ai model, quite good. for the script the best thing is giving 5 example of working scripts, you can download tiktok videos get the transcript from them and paste them as example to chatgpt.
-
-if you don't want to worry about anything of that, i would say one of the best tools i've found is [your-product]
-
----
-
-have you tried doing some ads? you can use [your-product], [tool-b] or similar
-
-also, what could work in your case is showcasing your knowledge through linkedin, freebies can be a good option
-
-and a lot of direct outreach
-
----
-
-at the end small business don't have time to use more tools, it is only going to work if the tool does "everything for them", so here I would go with AI tools
-
-examples:
-- chat support: [tool-a]
-- automations with [tool-b] or [tool-c]
-- video ads: [your-product]
-
-</examples>
-
-Replace `[your-product]` with the real product name. Replace `[tool-x]` with real, well-known tools relevant to the thread.
-
-## Comment Angles
-
-Each draft should use a different angle. For detailed patterns and real-world examples of each, see [comment-angles.md](references/comment-angles.md).
-
-| Angle | Strategy | Product mention |
-|---|---|---|
-| **Helper** | Answer their question, mention product as one option | Medium |
-| **Tool List** | Curated list of 4-6 tools including yours | Medium |
-| **Experience Share** | Personal story, product comes up naturally | Low |
-| **Follow-up Question** | Engage genuinely, product only if relevant | Minimal/none |
-| **Contrarian** | Different perspective, product as evidence | Low |
-
-If the product doesn't fit the conversation naturally, write a value-only comment. Forcing a mention is worse than skipping it.
+Chrome Extension setup: `tabs_context_mcp` → `tabs_create_mcp` → use `tabId` for all subsequent calls.
 
 ## Process
 
-### 1. Read the thread (via browser automation)
+### Input
 
-**Chrome Extension:**
-1. `tabs_context_mcp` → `tabs_create_mcp` to set up a tab (first time only)
-2. `navigate` to the Reddit post URL (pass `tabId`)
-3. `read_page` to capture the post title, body, and top comments
-4. If comments aren't loaded, `computer` (action: `scroll`, direction: `down`) and `read_page` again
+If the user mentioned a company, check `profiles/{slug}.md` (derive slug: lowercase, hyphens). If found, load it and skip product questions.
 
-**Playwright:**
-1. `browser_navigate` to the Reddit post URL
-2. `browser_snapshot` to capture the post title, body, and top comments
-3. If comments aren't loaded, scroll down and snapshot again
+Otherwise ask for: **product name + URL**, **one-sentence description**, and **the Reddit post** (URL preferred).
 
-From the snapshot, identify:
-- What the person is actually asking or struggling with
-- What kind of reply would genuinely help
-- Whether mentioning the product fits naturally
+### Step 1. Read the Thread
 
-### 2. Generate 5 drafts
+Navigate to the post URL via browser automation. Read the post title, body, and top comments. Identify what the person is asking, what would genuinely help, and whether the product fits naturally.
 
-Write 5 drafts, one per angle (helper, tool list, experience share, follow-up question, contrarian).
+### Step 2. Generate 5 Drafts
 
-### 3. Self-critique and select
+Read [style-guide.md](rules/style-guide.md) and [comment-angles.md](rules/comment-angles.md). If `personalization/voice-samples.md` has a Voice Analysis, read and blend it.
 
-Evaluate each draft. For full spam patterns to avoid, see [spam-signals.md](references/spam-signals.md).
+Write 5 drafts, one per angle (Helper, Tool List, Experience Share, Follow-up Question, Contrarian). If the product doesn't fit naturally, write a value-only comment — forcing a mention is worse than skipping it.
 
-| Criterion | Pass if... |
-|---|---|
-| **Spam** | Could not be mistaken for marketing |
-| **Relevance** | Directly addresses the post's topic |
-| **Value** | Reader learns something useful even ignoring the product |
-| **Style** | Matches the lowercase, casual examples above |
+### Step 3. Self-Critique and Select
 
-Discard drafts that fail any criterion. Rewrite the top 3, present them ranked with the recommended pick clearly marked.
+Read [spam-signals.md](rules/spam-signals.md). Evaluate each draft for spam signals, relevance, value, and style. Discard failing drafts. Rewrite the top 3, present ranked with recommended pick marked.
 
-### 4. Post the comment (optional, only if user confirms)
+### Step 4. Post the Comment
 
-Only after the user picks a draft and explicitly says to post it:
+Only after the user picks a draft and explicitly confirms. Navigate to the post, find the comment box, type the text, verify it reads correctly, ask for final confirmation, then submit.
 
-**Chrome Extension:**
-1. `navigate` to the Reddit post URL (if not already there)
-2. `find` query: "comment input box" to locate the comment field
-3. `computer` (action: `left_click`) on the comment box
-4. `form_input` or `computer` (action: `type`) to enter the selected comment text
-5. `read_page` to verify the text is correct
-6. Ask the user for final confirmation before clicking submit
-7. `find` query: "submit comment button" → `computer` (action: `left_click`) to submit
+### Step 5. Log to Tracking
 
-**Playwright:**
-1. `browser_navigate` to the Reddit post URL (if not already there)
-2. `browser_snapshot` to find the comment input box
-3. `browser_click` on the comment box
-4. `browser_type` the selected comment text
-5. `browser_snapshot` to verify the text is correct
-6. Ask the user for final confirmation before clicking submit
-7. `browser_click` the submit/comment button
+Log the comment to `tracking/{YYYY-MM-DD}.md` (create if needed). Format specified in [batch-mode.md](workflows/batch-mode.md#tracking-format). Include: subreddit, time, post title + URL, angle, product mentioned (yes/no), word count, full comment text.
 
-## Fallback Templates
-
-If drafts don't feel right, offer these for manual adaptation:
-
-**The Helper:**
-[name], [role] at [company].
-[One sentence on what worked for you]
-Happy to share more if useful.
-
-**The Data Drop:**
-[Result] in [timeframe].
-Cost: [X] | Time: [X]/week | Stack: [tool/tool/tool]
-[One thing that didn't work]. [One fix].
-
-**The Follow-up:**
-[Acknowledge their point].
-[What worked for you, one sentence].
-[Question to keep thread alive]?
