@@ -43,6 +43,22 @@ Write replies that genuinely help the conversation while naturally weaving in th
 | Shares a Reddit URL | Single-comment flow (continue below) |
 | "show progress" / "what did I do today" | Read and display `tracking/{YYYY-MM-DD}.md` (today's date) |
 
+**If the intent matches a row above, follow that workflow only and STOP — do NOT continue to the Process section.**
+
+If no clear intent is detected (user just activated the skill without specifying what to do), check for existing profiles in `profiles/` and present the available options:
+
+> Here's what I can do:
+>
+> 1. **Write comments** — give me Reddit post URLs and I'll draft replies (or I can find posts for you in your target subreddits)
+> 2. **Do today for [company]** — fill your daily comment quota automatically
+> 3. **Set up a new profile** — save your product info so you don't repeat it every time
+> 4. **Learn your style** — paste some Reddit comments and I'll match your voice
+> 5. **Show progress** — see what you've done today
+>
+> What would you like to do?
+
+Wait for the user's response before proceeding.
+
 ## File Reference Timing
 
 Reference each file only at the relevant step — don't read in advance unless noted.
@@ -76,9 +92,12 @@ Chrome Extension setup: `tabs_context_mcp` → `tabs_create_mcp` → use `tabId`
 
 ### Input
 
-If the user mentioned a company, check `profiles/{slug}.md` (derive slug: lowercase, hyphens). If found, load it and skip product questions.
+If the user mentioned a company, check `profiles/{slug}.md` (derive slug: lowercase, hyphens). If found, load it and skip product questions. Otherwise ask for **product name + URL** and **one-sentence description**.
 
-Otherwise ask for: **product name + URL**, **one-sentence description**, and **the Reddit post** (URL preferred).
+Then determine how to get the Reddit post:
+
+- **User provides URLs:** The user shares one or more Reddit post URLs. Process each one through Steps 1-5.
+- **Agent finds posts:** If the user says "find posts" or the profile has target subreddits, navigate to those subreddits (sorted by new/rising), find 2-3 candidate posts that fit the product, present them to the user, and let them pick which to reply to. Filter out posts older than 24h, posts with fewer than 2 comments, and posts already in tracking files from the last 7 days.
 
 ### Step 1. Read the Thread
 
