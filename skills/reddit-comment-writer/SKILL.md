@@ -1,137 +1,111 @@
 ---
 name: reddit-comment-writer
-description: Write authentic Reddit comments that naturally mention a product without sounding spammy. Supports company profiles, batch mode ("do today for [company]"), activity tracking, and voice personalization. Triggers on "write a reddit comment", "reply to this reddit post", "set up [company]", "do today for [company]", "fill quota", "learn my style", "show progress", or when the user shares a Reddit URL.
+description: Write authentic Reddit comments that naturally mention a product without sounding spammy. Supports company profiles, batch mode, activity tracking, and voice personalization. Triggers on "write a reddit comment", "set up [company]", "do today for [company]", "fill quota", "learn my style", "show progress", or when the user shares a Reddit URL.
 ---
 
 # Reddit Comment Writer
 
-Write replies that genuinely help the conversation while naturally weaving in the user's product as one option among several. Golden rule: if a comment sounds like an ad, it fails. Every reply must pass as peer advice from someone who happens to use the product.
+## FIRST: What Does the User Want?
 
-## IMPORTANT: Start Here
+**Always start here. Do NOT read any files or ask any questions before checking this table.**
 
-**Do NOT skip this section. Do NOT jump ahead to the Process section. Do NOT read any rule files yet.**
-
-First, determine what the user wants. Check the table below:
-
-| User says | Action |
+| User says | Do this, then STOP |
 |---|---|
-| "set up [company]" / "new profile" | Read [setup-profile.md](workflows/setup-profile.md) and follow it. **STOP here.** |
-| "do today for [company]" / "fill quota" | Read [batch-mode.md](workflows/batch-mode.md) and follow it. **STOP here.** |
-| "learn my style" / pastes Reddit comments | Read [voice-samples.md](personalization/voice-samples.md) and follow it. **STOP here.** |
-| Shares a Reddit URL | Go to **Process** section below. |
-| "show progress" / "what did I do today" | Read `tracking/{YYYY-MM-DD}.md` (today's date) and display it. **STOP here.** |
+| "set up [company]" / "new profile" | Read [setup-profile.md](workflows/setup-profile.md) and follow it |
+| "do today for [company]" / "fill quota" | Read [batch-mode.md](workflows/batch-mode.md) and follow it |
+| "learn my style" / pastes Reddit comments | Read [voice-samples.md](personalization/voice-samples.md) and follow it |
+| "show progress" / "what did I do today" | Read and display `tracking/{YYYY-MM-DD}.md` |
+| Shares a Reddit URL + product info | Skip to **Step 1** below |
 
-**If none of the above match** (user just activated the skill without a specific request), present these options and WAIT for their response:
+**If none match**, show this menu and wait:
 
-> Here's what I can do:
->
-> 1. **Write comments** — give me Reddit post URLs and I'll draft replies, or I can browse your target subreddits and find posts for you
-> 2. **Do today for [company]** — fill your daily comment quota automatically
-> 3. **Set up a new profile** — save your product info so you don't repeat it every time
-> 4. **Learn your style** — paste some Reddit comments and I'll match your voice
-> 5. **Show progress** — see what you've done today
->
-> What would you like to do?
-
-**Do NOT proceed until the user has responded.**
+> 1. **Write comments** — tell me your product and I'll find Reddit posts to reply to
+> 2. **Do today for [company]** — fill your daily comment quota
+> 3. **Set up a new profile** — save your product info for future sessions
+> 4. **Learn your style** — I'll analyze your Reddit comments to match your voice
+> 5. **Show progress** — see today's activity
 
 ---
 
 ## Structure
 
-- `rules/` - Writing rules and quality checks
-  - `style-guide.md` - Voice, formatting, capitalization, tone, do/don't examples
-  - `comment-angles.md` - 5 comment angles with patterns and real-world examples
-  - `spam-signals.md` - Spam patterns to avoid, anti-patterns, red flags
-- `workflows/` - Multi-step flows
-  - `setup-profile.md` - Interactive company profile creation
-  - `batch-mode.md` - Quota-filling loop across subreddits
-- `profiles/` - Company profiles (one per product)
-  - `_template.md` - Blank profile schema
-  - `{slug}.md` - Filled profiles created via setup flow
-- `personalization/` - Optional voice matching
-  - `voice-samples.md` - User's Reddit comments + auto-generated Voice Analysis
-- `tracking/` - Daily activity logs (auto-created at runtime)
-  - `{YYYY-MM-DD}.md` - Per-day comment log with quota progress
+- `rules/` — `style-guide.md`, `comment-angles.md`, `spam-signals.md`
+- `workflows/` — `setup-profile.md`, `batch-mode.md`
+- `profiles/` — `_template.md` + company profiles created via setup
+- `personalization/` — `voice-samples.md`
+- `tracking/` — daily `{YYYY-MM-DD}.md` logs
 
 ## Critical Rules
 
-- **Login Required:** Check Reddit account login status before any posting action
-- **Rate Limiting:** Posting too fast risks account restrictions — respect cooldowns between comments
-- **Community Rules:** Follow each subreddit's specific rules (check sidebar before first comment)
-- **Spam Prevention:** NO copy-pasting the same content across threads. Every comment must be unique
-- **Review Required:** If any checklist item from Step 3 is violated, rewrite — never post a failing comment
-- **Post Analysis Required:** NEVER write a comment without fully reading the post first. Judging by title alone causes serious errors — always complete Step 1 before drafting
+- **Login Required:** Check Reddit login before posting
+- **Rate Limiting:** Respect cooldowns between comments
+- **Community Rules:** Check subreddit sidebar before first comment
+- **Spam Prevention:** Every comment must be unique — NO copy-pasting
+- **Review Required:** Rewrite any draft that fails the Step 3 checklist
+- **Read Before Writing:** NEVER draft without fully reading the post first
 
 ## File Reference Timing
 
-Reference each file only at the relevant step — don't read in advance unless noted.
+Don't read files in advance — only at the step that needs them.
 
-| File | When to read |
+| File | When |
 |---|---|
-| `profiles/{slug}.md` | Input — when company name is mentioned, load profile and skip product questions |
-| `rules/style-guide.md` | Step 2 — writing voice, formatting, do/don't examples |
-| `rules/comment-angles.md` | Step 2 — 5 angles with patterns and real examples. In batch mode, read once at session start |
-| `rules/spam-signals.md` | Step 3 — spam patterns, anti-patterns, red flags |
-| `personalization/voice-samples.md` | Step 2 — only if Voice Analysis section is populated. User's voice takes priority over style guide |
-| `tracking/{YYYY-MM-DD}.md` | Step 5 — logging. Create if it doesn't exist |
+| `profiles/{slug}.md` | When user mentions a company name |
+| `rules/style-guide.md` | Step 2 |
+| `rules/comment-angles.md` | Step 2 |
+| `rules/spam-signals.md` | Step 3 |
+| `personalization/voice-samples.md` | Step 2, only if Voice Analysis exists |
+| `tracking/{YYYY-MM-DD}.md` | Step 5 |
 
 ## Browser Automation
 
-**Prefer Chrome Extension** (`mcp__claude-in-chrome__`) → falls back to **Playwright** (`mcp__playwright__`) → falls back to pasted text.
+**Prefer Chrome Extension** (`mcp__claude-in-chrome__`) → **Playwright** (`mcp__playwright__`) → pasted text.
 
-Minimize tokens in all browser calls — pass only concise instructions (e.g., "Navigate to [URL]", "Click comment box", "Type: [text]"). Always navigate directly to URLs instead of clicking links.
+Minimize tokens: pass only concise instructions. Navigate directly to URLs, never click links.
 
 | Action | Chrome Extension | Playwright |
 |---|---|---|
 | Navigate | `navigate` | `browser_navigate` |
 | Read page | `read_page` | `browser_snapshot` |
-| Find element | `find` (natural language) | _(snapshot refs)_ |
+| Find element | `find` | _(snapshot refs)_ |
 | Click | `computer` (left_click) | `browser_click` |
 | Type | `form_input` / `computer` (type) | `browser_type` |
 
-Chrome Extension setup: `tabs_context_mcp` → `tabs_create_mcp` → use `tabId` for all subsequent calls.
+Chrome Extension: `tabs_context_mcp` → `tabs_create_mcp` → use `tabId` for all calls.
 
-## Process
+---
 
-**Only reach this section if the user chose "Write comments" or shared a Reddit URL.**
+## Process (Write Comments Flow)
 
-### Step 0. Product Info
+### Step 0. Get Product Info
 
-If the user mentioned a company, check `profiles/{slug}.md` (derive slug: lowercase, hyphens). If found, load it — product info is already there.
+Check `profiles/` for an existing profile. If found, load it. If not, ask:
 
-If no profile exists, ask for **product name + URL** and **one-sentence description**. Wait for answers. Do NOT ask for a Reddit post yet.
+1. Product name + URL (space before TLD)
+2. One-sentence description
 
-### Step 0b. Get the Reddit Post
+### Step 1. Find and Read a Post
 
-Ask the user:
+If the user already shared a URL, navigate to it.
 
-> How do you want to find posts?
-> 1. **I'll give you URLs** — paste one or more Reddit post links
-> 2. **Find posts for me** — I'll browse your target subreddits and suggest candidates
+Otherwise, browse the target subreddits from the profile (or ask the user which subreddits to check). Sort by new/rising. Find 2-3 posts that fit the product. Skip posts older than 24h, posts with <2 comments, and posts already in `tracking/` from the last 7 days. Present candidates and let the user pick.
 
-If the user provides URLs, proceed to Step 1 with each URL.
-
-If the user wants the agent to find posts, navigate to the profile's target subreddits (sorted by new/rising), find 2-3 candidate posts that fit the product, present them with title + summary + why it's a good fit, and let the user pick. Filter out posts older than 24h, posts with fewer than 2 comments, and posts already in tracking files from the last 7 days.
-
-### Step 1. Read the Thread
-
-Navigate to the post URL via browser automation. Read the post title, body, and top comments. Identify what the person is asking, what would genuinely help, and whether the product fits naturally.
+Then read the full post and top comments. Identify what the person needs and whether the product fits naturally.
 
 ### Step 2. Generate 5 Drafts
 
-Read [style-guide.md](rules/style-guide.md) and [comment-angles.md](rules/comment-angles.md). If `personalization/voice-samples.md` has a Voice Analysis, read and blend it.
+Read [style-guide.md](rules/style-guide.md) and [comment-angles.md](rules/comment-angles.md). If `personalization/voice-samples.md` has a Voice Analysis, blend it in.
 
-Write 5 drafts, one per angle (Helper, Tool List, Experience Share, Follow-up Question, Contrarian). If the product doesn't fit naturally, write a value-only comment — forcing a mention is worse than skipping it.
+Write 5 drafts, one per angle (Helper, Tool List, Experience Share, Follow-up Question, Contrarian). If the product doesn't fit, skip the mention entirely.
 
 ### Step 3. Self-Critique and Select
 
-Read [spam-signals.md](rules/spam-signals.md). Evaluate each draft for spam signals, relevance, value, and style. Discard failing drafts. Rewrite the top 3, present ranked with recommended pick marked.
+Read [spam-signals.md](rules/spam-signals.md). Check each draft for spam signals, relevance, value, and style. Discard failures. Present top 3 ranked with recommended pick marked.
 
 ### Step 4. Post the Comment
 
-Only after the user picks a draft and explicitly confirms. Navigate to the post, find the comment box, type the text, verify it reads correctly, ask for final confirmation, then submit.
+Only after user picks a draft and confirms. Navigate to post, type comment, verify, ask final confirmation, submit.
 
 ### Step 5. Log to Tracking
 
-Log the comment to `tracking/{YYYY-MM-DD}.md` (create if needed). Format specified in [batch-mode.md](workflows/batch-mode.md#tracking-format). Include: subreddit, time, post title + URL, angle, product mentioned (yes/no), word count, full comment text.
+Log to `tracking/{YYYY-MM-DD}.md` (create if needed). Format in [batch-mode.md](workflows/batch-mode.md#tracking-format). Include: subreddit, time, post URL, angle, product mentioned, word count, full text.
