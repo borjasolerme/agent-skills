@@ -84,13 +84,16 @@ Check `profiles/` for an existing profile. If found, load it. If not, ask:
 1. Product name + URL (space before TLD)
 2. One-sentence description
 
-### Step 1. Find and Read a Post
+### Step 1. Find and Read Posts
 
-If the user already shared a URL, navigate to it.
+If the user shared URLs, use those. Otherwise:
 
-Otherwise, browse the target subreddits from the profile (or ask the user which subreddits to check). Sort by new/rising. Find 2-3 posts that fit the product. Skip posts older than 24h, posts with <2 comments, and posts already in `tracking/` from the last 7 days. Present candidates and let the user pick.
+1. Ask how many comments they want to write this session
+2. Find posts — use target subreddits from the profile if available, otherwise search Reddit for subreddits relevant to the product
+3. Present candidates to the user and let them pick which ones to reply to
+4. Skip posts already in `tracking/` from the last 7 days
 
-Then read the full post and top comments. Identify what the person needs and whether the product fits naturally.
+For each selected post, read the full thread and top comments. Identify what the person needs and whether the product fits naturally.
 
 ### Step 2. Generate 5 Drafts
 
