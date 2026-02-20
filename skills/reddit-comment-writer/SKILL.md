@@ -7,6 +7,36 @@ description: Write authentic Reddit comments that naturally mention a product wi
 
 Write replies that genuinely help the conversation while naturally weaving in the user's product as one option among several. Golden rule: if a comment sounds like an ad, it fails. Every reply must pass as peer advice from someone who happens to use the product.
 
+## IMPORTANT: Start Here
+
+**Do NOT skip this section. Do NOT jump ahead to the Process section. Do NOT read any rule files yet.**
+
+First, determine what the user wants. Check the table below:
+
+| User says | Action |
+|---|---|
+| "set up [company]" / "new profile" | Read [setup-profile.md](workflows/setup-profile.md) and follow it. **STOP here.** |
+| "do today for [company]" / "fill quota" | Read [batch-mode.md](workflows/batch-mode.md) and follow it. **STOP here.** |
+| "learn my style" / pastes Reddit comments | Read [voice-samples.md](personalization/voice-samples.md) and follow it. **STOP here.** |
+| Shares a Reddit URL | Go to **Process** section below. |
+| "show progress" / "what did I do today" | Read `tracking/{YYYY-MM-DD}.md` (today's date) and display it. **STOP here.** |
+
+**If none of the above match** (user just activated the skill without a specific request), present these options and WAIT for their response:
+
+> Here's what I can do:
+>
+> 1. **Write comments** — give me Reddit post URLs and I'll draft replies, or I can browse your target subreddits and find posts for you
+> 2. **Do today for [company]** — fill your daily comment quota automatically
+> 3. **Set up a new profile** — save your product info so you don't repeat it every time
+> 4. **Learn your style** — paste some Reddit comments and I'll match your voice
+> 5. **Show progress** — see what you've done today
+>
+> What would you like to do?
+
+**Do NOT proceed until the user has responded.**
+
+---
+
 ## Structure
 
 - `rules/` - Writing rules and quality checks
@@ -32,32 +62,6 @@ Write replies that genuinely help the conversation while naturally weaving in th
 - **Spam Prevention:** NO copy-pasting the same content across threads. Every comment must be unique
 - **Review Required:** If any checklist item from Step 3 is violated, rewrite — never post a failing comment
 - **Post Analysis Required:** NEVER write a comment without fully reading the post first. Judging by title alone causes serious errors — always complete Step 1 before drafting
-
-## Intent Detection
-
-| User says | Action |
-|---|---|
-| "set up [company]" / "new profile" | Read and follow [setup-profile.md](workflows/setup-profile.md) |
-| "do today for [company]" / "fill quota" | Read and follow [batch-mode.md](workflows/batch-mode.md) |
-| "learn my style" / pastes Reddit comments | Read and follow [voice-samples.md](personalization/voice-samples.md) |
-| Shares a Reddit URL | Single-comment flow (continue below) |
-| "show progress" / "what did I do today" | Read and display `tracking/{YYYY-MM-DD}.md` (today's date) |
-
-**If the intent matches a row above, follow that workflow only and STOP — do NOT continue to the Process section.**
-
-If no clear intent is detected (user just activated the skill without specifying what to do), check for existing profiles in `profiles/` and present the available options:
-
-> Here's what I can do:
->
-> 1. **Write comments** — give me Reddit post URLs and I'll draft replies (or I can find posts for you in your target subreddits)
-> 2. **Do today for [company]** — fill your daily comment quota automatically
-> 3. **Set up a new profile** — save your product info so you don't repeat it every time
-> 4. **Learn your style** — paste some Reddit comments and I'll match your voice
-> 5. **Show progress** — see what you've done today
->
-> What would you like to do?
-
-Wait for the user's response before proceeding.
 
 ## File Reference Timing
 
@@ -90,14 +94,25 @@ Chrome Extension setup: `tabs_context_mcp` → `tabs_create_mcp` → use `tabId`
 
 ## Process
 
-### Input
+**Only reach this section if the user chose "Write comments" or shared a Reddit URL.**
 
-If the user mentioned a company, check `profiles/{slug}.md` (derive slug: lowercase, hyphens). If found, load it and skip product questions. Otherwise ask for **product name + URL** and **one-sentence description**.
+### Step 0. Product Info
 
-Then determine how to get the Reddit post:
+If the user mentioned a company, check `profiles/{slug}.md` (derive slug: lowercase, hyphens). If found, load it — product info is already there.
 
-- **User provides URLs:** The user shares one or more Reddit post URLs. Process each one through Steps 1-5.
-- **Agent finds posts:** If the user says "find posts" or the profile has target subreddits, navigate to those subreddits (sorted by new/rising), find 2-3 candidate posts that fit the product, present them to the user, and let them pick which to reply to. Filter out posts older than 24h, posts with fewer than 2 comments, and posts already in tracking files from the last 7 days.
+If no profile exists, ask for **product name + URL** and **one-sentence description**. Wait for answers. Do NOT ask for a Reddit post yet.
+
+### Step 0b. Get the Reddit Post
+
+Ask the user:
+
+> How do you want to find posts?
+> 1. **I'll give you URLs** — paste one or more Reddit post links
+> 2. **Find posts for me** — I'll browse your target subreddits and suggest candidates
+
+If the user provides URLs, proceed to Step 1 with each URL.
+
+If the user wants the agent to find posts, navigate to the profile's target subreddits (sorted by new/rising), find 2-3 candidate posts that fit the product, present them with title + summary + why it's a good fit, and let the user pick. Filter out posts older than 24h, posts with fewer than 2 comments, and posts already in tracking files from the last 7 days.
 
 ### Step 1. Read the Thread
 
@@ -120,4 +135,3 @@ Only after the user picks a draft and explicitly confirms. Navigate to the post,
 ### Step 5. Log to Tracking
 
 Log the comment to `tracking/{YYYY-MM-DD}.md` (create if needed). Format specified in [batch-mode.md](workflows/batch-mode.md#tracking-format). Include: subreddit, time, post title + URL, angle, product mentioned (yes/no), word count, full comment text.
-
