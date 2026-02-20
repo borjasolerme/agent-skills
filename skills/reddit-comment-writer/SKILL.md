@@ -90,10 +90,10 @@ If the user shared URLs, use those. Otherwise:
 
 1. Ask how many comments they want to write this session
 2. Find posts — use target subreddits from the profile if available, otherwise search Reddit for subreddits relevant to the product
-3. Present candidates to the user and let them pick which ones to reply to
-4. Skip posts already in `tracking/` from the last 7 days
+3. Skip posts already in `tracking/` from the last 7 days
+4. Pick the best-fit posts and start drafting — no need to ask permission for each one
 
-For each selected post, read the full thread and top comments. Identify what the person needs and whether the product fits naturally.
+For each post, read the full thread and top comments. Identify what the person needs and whether the product fits naturally.
 
 ### Step 2. Generate 5 Drafts
 
