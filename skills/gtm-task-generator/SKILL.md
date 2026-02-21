@@ -22,7 +22,7 @@ Ask all of these one by one. Do NOT assume answers from context. Do NOT skip any
 
 ### 2. Output
 
-Create `growth/[platform]-[product]/TASK.md`:
+Create `[platform]-[product]/TASK.md` in the current directory:
 
 ```markdown
 # [Campaign Title]
@@ -47,7 +47,7 @@ Create `growth/[platform]-[product]/TASK.md`:
 - [ ] [task or URL]
 ```
 
-Create `growth/[platform]-[product]/progress.txt`:
+Create `[platform]-[product]/progress.txt`:
 
 ```
 # Progress Log — [campaign-name]
