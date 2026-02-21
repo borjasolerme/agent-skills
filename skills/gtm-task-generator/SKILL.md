@@ -10,15 +10,15 @@ Create a TASK.md ready for growth Ralph.
 
 ## Workflow
 
-### 1. Ask what's missing
+### 1. Ask these questions — ALWAYS, even if some seem obvious
 
-- **Product** — which product and a one-liner
-- **Platform** — where will this run
-- **Goal** — what each task accomplishes
-- **Skill** — which skill Ralph should load per task (or "none")
-- **Tasks** — the list of URLs or actions to execute
+Ask all of these one by one. Do NOT assume answers from context. Do NOT skip any. Wait for the user to respond before proceeding.
 
-Skip anything already clear from conversation.
+1. **Product** — which product and a one-liner about it
+2. **Platform** — where will this run (Reddit, directories, Quora, forums, etc.)
+3. **Goal** — what should each task accomplish
+4. **Skill** — which installed skill should Ralph load to execute each task? List the user's installed skills and ask them to pick one, or "none" if tasks are just instructions.
+5. **Tasks** — ask the user to provide their list of URLs or actions
 
 ### 2. Output
 
@@ -57,7 +57,11 @@ Create `growth/[platform]-[product]/progress.txt`:
 
 ### 3. Confirm
 
-Show the user the TASK.md. Ask if anything needs changing. Then confirm:
+Show the TASK.md to the user BEFORE saving. Ask:
+- Does this look right?
+- Anything to change?
+
+Only save after user confirms. Then show:
 
 ```bash
 cd growth
