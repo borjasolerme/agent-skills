@@ -13,6 +13,7 @@ description: Write authentic Reddit comments that naturally mention a product wi
 |---|---|
 | "set up [company]" / "new profile" | Read [setup-profile.md](workflows/setup-profile.md) and follow it |
 | "do today for [company]" / "fill quota" | Read [batch-mode.md](workflows/batch-mode.md) and follow it |
+| "create posts" / "write reddit posts" / "post value content" | Read [value-posts.md](workflows/value-posts.md) and follow it |
 | "learn my style" / pastes Reddit comments | Read [voice-samples.md](personalization/voice-samples.md) and follow it |
 | "show progress" / "what did I do today" | Read and display `tracking/{YYYY-MM-DD}.md` |
 | Shares a Reddit URL + product info | Skip to **Step 1** below |
@@ -21,16 +22,17 @@ description: Write authentic Reddit comments that naturally mention a product wi
 
 > 1. **Write comments** — tell me your product and I'll find Reddit posts to reply to
 > 2. **Do today for [company]** — fill your daily comment quota
-> 3. **Set up a new profile** — save your product info for future sessions
-> 4. **Learn your style** — I'll analyze your Reddit comments to match your voice
-> 5. **Show progress** — see today's activity
+> 3. **Create value posts** — write 3 Reddit posts that share knowledge from threads you've read
+> 4. **Set up a new profile** — save your product info for future sessions
+> 5. **Learn your style** — I'll analyze your Reddit comments to match your voice
+> 6. **Show progress** — see today's activity
 
 ---
 
 ## Structure
 
 - `rules/` — `style-guide.md`, `comment-angles.md`, `spam-signals.md`
-- `workflows/` — `setup-profile.md`, `batch-mode.md`
+- `workflows/` — `setup-profile.md`, `batch-mode.md`, `value-posts.md`
 - `profiles/` — `_template.md` + company profiles created via setup
 - `personalization/` — `voice-samples.md`
 - `tracking/` — daily `{YYYY-MM-DD}.md` logs
