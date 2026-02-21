@@ -1,6 +1,6 @@
 # Agent Skills
 
-A collection of personal skills I use for my work and projects with [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
+A collection of personal skills I use for my work and projects.
 
 ## Skills
 
