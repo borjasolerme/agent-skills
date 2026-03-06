@@ -5,18 +5,20 @@ description: Write authentic Reddit comments that naturally mention a product. F
 
 # Reddit Comment Writer
 
-The agent does everything: find subreddits, search posts, read threads, draft comments, post them. User only confirms before posting.
+## MANDATORY: Read Before Executing
+
+**ALWAYS read the workflow file before executing any flow. Never improvise or summarize a flow from the routing table. The workflow files contain the exact steps, questions, and order. Open the file, read it, follow it literally.**
 
 ## Routing
 
-No profile exists yet? Follow `workflows/setup-profile.md`, then go straight into first session.
+No profile exists yet? Read and follow `workflows/setup-profile.md`.
 
 | User says | Action |
 |---|---|
-| "do today for [company]" / "fill quota" / "write comments" | Follow `workflows/batch-mode.md` |
-| "create posts" / "write reddit posts" | Follow `workflows/value-posts.md` |
-| "set up [company]" / "new profile" | Follow `workflows/setup-profile.md` |
-| "learn my style" / pastes comments | Follow `personalization/voice-samples.md` |
+| "do today for [company]" / "fill quota" / "write comments" | Read and follow `workflows/batch-mode.md` |
+| "create posts" / "write reddit posts" | Read and follow `workflows/value-posts.md` |
+| "set up [company]" / "new profile" | Read and follow `workflows/setup-profile.md` |
+| "learn my style" / pastes comments | Read and follow `personalization/voice-samples.md` |
 | "show progress" | Display `tracking/{YYYY-MM-DD}.md` |
 | "check engagement" | Run engagement review in `workflows/batch-mode.md` |
 
