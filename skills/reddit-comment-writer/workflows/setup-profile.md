@@ -18,7 +18,10 @@ Ask each group of questions together, wait for answers before proceeding.
 
 ## Step 3: Target Subreddits
 
-For each sub: name, daily limit (1-3), community notes (tone, rules), good post types. If user isn't sure about community notes, offer to figure it out by reading the sub later.
+Ask: "do you have specific subreddits in mind, or should I find the best ones for your product?"
+
+- **User has subs:** collect name, daily limit (1-3), community notes, good post types per sub.
+- **User wants auto-discovery:** save no subs in profile. The agent will search Reddit for relevant communities before each session based on product category and competitors. Good subs discovered this way get saved to the profile automatically after being scored.
 
 ## Step 4: Preferred Angles
 

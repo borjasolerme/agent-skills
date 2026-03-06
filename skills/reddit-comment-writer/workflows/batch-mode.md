@@ -4,12 +4,13 @@ Fills the daily comment quota for a company profile. Triggered by "do today for 
 
 ## Prerequisites
 
-1. Load `profiles/{slug}.md`. No profile? Prompt setup first.
-2. Load `tracking/{YYYY-MM-DD}.md` (today). Calculate remaining quota per subreddit.
-3. Load `rules/comment-angles.md` and `rules/style-guide.md` once.
-4. Load `personalization/voice-samples.md` if Voice Analysis exists.
-5. Run **Engagement Review** if tracked comments > 12 hours old lack engagement data.
-6. Run **Subreddit Study** for any sub with stale insights (> 3 days in `tracking/insights.md`).
+1. Load `profiles/{slug}.md`. No profile? Run setup first (see `SKILL.md` First Session Flow).
+2. **Find subreddits** if profile has none — search Reddit for communities matching the product category. Evaluate fit, save the best ones to the profile.
+3. Load `tracking/{YYYY-MM-DD}.md` (today). Calculate remaining quota per subreddit.
+4. Load `rules/comment-angles.md` and `rules/style-guide.md` once.
+5. Load `personalization/voice-samples.md` if Voice Analysis exists.
+6. Run **Engagement Review** if tracked comments > 12 hours old lack engagement data.
+7. Run **Subreddit Study** for any sub with stale insights (> 3 days in `tracking/insights.md`).
 
 ## Session Plan
 
