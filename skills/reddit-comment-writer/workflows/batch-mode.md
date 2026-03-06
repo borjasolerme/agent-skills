@@ -1,173 +1,94 @@
 # Batch Mode
 
-Triggered by "do today for [company]", "fill quota", or similar. This workflow fills the daily comment quota for a company profile across all its target subreddits.
-
----
+Fills the daily comment quota for a company profile. Triggered by "do today for [company]" or "fill quota".
 
 ## Prerequisites
 
-1. **Load profile:** Read `profiles/{slug}.md` for the requested company. If not found, prompt the user to run setup first ("no profile found for {company} — want to set one up?").
-2. **Load today's tracking file:** Read `tracking/{YYYY-MM-DD}.md` (today's date). If it doesn't exist, this is the first session today — the file will be created after the first comment.
-3. **Load reference files once:** Read `rules/comment-angles.md` and `rules/style-guide.md` at session start. Do not re-read these mid-session.
-4. **Load personalization (if exists):** Check if `personalization/voice-samples.md` has a Voice Analysis section. If populated, read it once and apply during drafting.
-5. **Calculate remaining quota:** For each target subreddit in the profile, subtract comments already logged today from the daily limit.
-
----
+1. Load `profiles/{slug}.md`. No profile? Prompt setup first.
+2. Load `tracking/{YYYY-MM-DD}.md` (today). Calculate remaining quota per subreddit.
+3. Load `rules/comment-angles.md` and `rules/style-guide.md` once.
+4. Load `personalization/voice-samples.md` if Voice Analysis exists.
+5. Run **Engagement Review** if tracked comments > 12 hours old lack engagement data.
+6. Run **Subreddit Study** for any sub with stale insights (> 3 days in `tracking/insights.md`).
 
 ## Session Plan
 
-Present the user with a status overview before starting:
+Check `tracking/insights.md` for subreddit scores. Only include eligible subs:
+- **A/B:** full quota
+- **C:** half quota
+- **D:** skip unless user asks
+- **F:** never include — suggest removing from profile
+- **Unscored** (< 5 comments): full quota
 
-```
-Today's plan for {product name}:
-
-r/{sub_1}: {done}/{limit} — {remaining} to go
-r/{sub_2}: {done}/{limit} — {remaining} to go
-...
-Total: {total_remaining} comments remaining
-```
-
-If all quotas are filled, report that and ask if the user wants to do extra.
-
----
+Show plan, then start the loop.
 
 ## Per-Subreddit Loop
 
-For each subreddit with remaining quota:
+### 1. Find candidates
+Fetch new/rising posts (alternate). Pick 2-3 matching profile's "good post types". Filter out: already tracked (last 7 days), > 24h old, poor fit, < 2 comments.
 
-### 1. Find Candidate Posts
+### 2. Present candidates
+Title, 1-sentence summary, why it fits, estimated angle. User picks one or skips.
 
-- Navigate to the subreddit sorted by **new** or **rising** (alternate between sessions)
-- Identify 2-3 candidate posts that match the profile's "good post types"
-- **Filter out:**
-  - Posts already commented on (check URLs in tracking files from the last 7 days)
-  - Posts older than 24 hours (diminishing visibility)
-  - Posts that are a poor fit for the product
-  - Posts with fewer than 2 comments (too early, low engagement signal)
+### 3. Read thread
+Full post + top comments via Reddit API (see `SKILL.md` tools). Note: what they need, what's been said, whether product fits.
 
-### 2. Present Candidates
+### 4. Draft 3 comments
+One per angle. Prioritize angles that performed well per `tracking/insights.md`. Match subreddit tone/length from study. Apply progressive learning (see `SKILL.md`). Follow `rules/style-guide.md`.
 
-Show the user 2-3 candidates with:
-- Post title
-- Brief summary (1 sentence)
-- Why it's a good fit
-- Estimated angle
+### 5. Critique + present top 2
+Check against `rules/spam-signals.md`. Show recommended pick, angle, word count, product mentioned y/n.
 
-The user picks one, or skips all (move to next subreddit).
+### 6. Post + log
+Post after user confirms. Log to `tracking/{YYYY-MM-DD}.md` per `tracking/FORMAT.md`.
 
-### 3. Read the Thread
+### 7. Transition
+Report progress. Suggest 2-5 min break between subs. Pre-scan next sub during wait.
 
-Navigate to the selected post. Read the full post body and top comments using browser automation (see SKILL.md for tool mapping). Identify:
-- What the person is actually asking or struggling with
-- What existing comments have already said (don't repeat)
-- Whether the product fits naturally
+## Stop When
 
-### 4. Generate 3 Drafts
-
-Write **3 drafts** (not 5 — token-efficient for batch mode). Each draft should:
-- Use a different angle from the profile's preferred angles
-- Apply voice personalization if available
-- Follow the style guide
-
-### 5. Critique and Present Top 2
-
-Evaluate each draft against the spam signals checklist. Present the **top 2** with:
-- The recommended pick clearly marked
-- Angle used
-- Word count
-- Whether it mentions the product
-
-### 6. Post with Confirmation
-
-Only after the user picks a draft and confirms:
-1. Post the comment using browser automation (see SKILL.md for posting flow)
-2. Wait for confirmation that the comment was posted
-
-### 7. Log to Tracking
-
-Append the comment to `tracking/{YYYY-MM-DD}.md`. See **Tracking Format** below.
-
----
-
-## Subreddit Transition
-
-After completing a subreddit's quota:
-
-1. Report progress: "r/{sub}: {done}/{limit} complete"
-2. If more subreddits remain, tell the user: "moving to r/{next_sub} — good to take a 2-5 minute break between subs to keep posting patterns natural"
-3. During the wait, pre-scan the next subreddit for candidate posts
-
----
-
-## Termination Conditions
-
-Stop the batch session when any of these are true:
-
-- All subreddit quotas are filled
-- User says "stop", "done", or "that's enough"
-- No suitable posts remain in any subreddit
-- 3 consecutive skips or failures (user skipped all candidates 3 times in a row)
-
----
+- All quotas filled
+- User says stop
+- No suitable posts remain
+- 3 consecutive skips
 
 ## Session Summary
 
-At the end of the session, read the tracking file and present:
-
-```
-Session complete for {product name}:
-
-r/{sub_1}: {done}/{limit}
-r/{sub_2}: {done}/{limit}
-...
-Total: {total_done} comments posted
-Product mentioned: {count}/{total_done}
-Angles used: {list}
-```
+Show per-sub progress, total comments, product mention count, angles used.
 
 ---
 
-## Duplicate Prevention
+## Subreddit Study
 
-Before selecting any candidate post, check tracking files from the **last 7 days** for the post URL:
+Run once per sub before writing. Teaches what works *today* in each community.
 
-```
-tracking/{YYYY-MM-DD}.md   (today)
-tracking/{YYYY-MM-DD}.md   (yesterday)
-...
-tracking/{YYYY-MM-DD}.md   (7 days ago)
-```
+1. Fetch 5-10 top/hot posts. Read top 3-5 comments on each.
+2. Note: tone, winning length, structure, openers, what gets upvoted, what gets ignored.
+3. Save to `tracking/insights.md` under subreddit heading.
 
-If the URL appears in any file, skip that post.
+**Refresh rules:** Re-study if > 3 days old, or after poor engagement review. Skip if fresh.
 
 ---
 
-## Tracking Format
+## Engagement Review
 
-Each daily tracking file (`tracking/YYYY-MM-DD.md`) follows this format:
+Run at session start if tracked comments > 12h old lack engagement data.
 
-```markdown
-# {YYYY-MM-DD} — {product name}
+1. Load tracking files (last 7 days). Fetch each comment with a permalink via API.
+2. Record: score, reply count, OP replies, removed/flagged.
+3. Update tracking entries. Score each subreddit (A-F). Update `tracking/insights.md`.
+4. Present summary: best/worst per sub, avg scores, product mention impact, score changes.
 
-**Total:** {n} comments
-**Quota progress:** r/{sub_1}: {done}/{limit} | r/{sub_2}: {done}/{limit}
+### Subreddit Scoring (A-F)
 
----
+Based on: avg upvotes, reply rate, product mention impact, removals, audience fit.
 
-## 1. r/{subreddit} — {HH:MM}
+- **A:** High engagement, mentions welcome. Prioritize.
+- **B:** Solid. Keep posting.
+- **C:** Mixed. Reduce quota, experiment with angles.
+- **D:** Low engagement or hostile to mentions. Rarely post, pure value only.
+- **F:** Removals/downvotes/callouts. Stop posting. Suggest replacements.
 
-- **Post:** [{post title}]({post URL})
-- **Angle:** {Helper/Tool List/Experience Share/Follow-up Question/Contrarian}
-- **Product mentioned:** {yes/no}
-- **Word count:** {n}
+### Discovering New Subreddits
 
-> {full comment text}
-
----
-
-## 2. r/{subreddit} — {HH:MM}
-
-...
-```
-
-Update the **Total** and **Quota progress** lines in the header after each new comment.
+When D/F subs get dropped, look for replacements via cross-posts, sidebar links, user mentions of other communities. Suggest to user with reason.
