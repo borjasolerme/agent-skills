@@ -2,8 +2,6 @@
 name: coding-workflow
 description: Use when implementing, debugging, or reviewing code in an existing app and the user wants simple changes, reuse of existing components and design patterns, strong code quality, TDD-minded testing, and no over-engineering. Also use when deciding how much testing is needed, when validating UI changes with Agent Browser, or when simplifying a spec before coding.
 license: MIT
-user-invocable: true
-argument-hint: [task or change request]
 ---
 
 # Coding Workflow
@@ -105,16 +103,18 @@ Review the change with these questions:
 - Did we avoid over-engineering?
 - If another agent opens this later, will the intent be obvious?
 
-## 6. Git hygiene for concurrent sessions
+## 6. Commit and push every completed change
 
-When the user expects active branch hygiene across multiple agent sessions:
+After completing and verifying each meaningful change set:
 
-- Commit after each meaningful change set
-- Push the branch if the change has not already been pushed
-- Do not rewrite or revert unrelated work from other sessions
+- Always commit the change before finishing the task
+- Always push the current branch after committing
 - Keep commits scoped and readable
+- Do not include, rewrite, or revert unrelated work from other sessions
 
-Do not force a commit/push if the repo state is unclear, broken, or the user is obviously still iterating on the same unfinished change.
+This is required for every coding task. Do not wait for the user to request a commit or push, and do not limit this behavior to concurrent sessions.
+
+If the repository is unclear, broken, or the change is still unfinished, resolve that state before committing and pushing. If it cannot be resolved safely, report the blocker explicitly instead of silently skipping the commit or push.
 
 ## User request
 
